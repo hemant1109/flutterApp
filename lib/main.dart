@@ -1,5 +1,6 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/main_netowrk.dart';
 
 // for API
 //https://reqres.in/
@@ -8,7 +9,8 @@ import 'package:flutter/material.dart';
 //https://api.github.com/users/mralexgray/repos
 void main() {
   //runApp(const MyImageApp());
-  runApp(const MyApp());
+  // runApp(const MyApp());
+  runApp(const MyNetWorkApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -18,10 +18,10 @@ class MyNetWorkApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "List page",
+      title: "Network List page",
       theme: ThemeData(
           appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.white, foregroundColor: Colors.black)),
+              backgroundColor: Colors.white70, foregroundColor: Colors.black)),
       home: const RandomWords(),
     );
   }
@@ -49,7 +49,7 @@ class _RandomWordsState extends State<RandomWords> {
 
   Future<ItemDetails> fetchItem() async {
     final response = await http.get(Uri.parse(
-        'https://www.airport-data.com/api/ac_thumb.json?m=400A0B&n=2'));
+        'https://www.airport-data.com/api/ac_thumb.json?m=400A0B&n=20'));
 
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
@@ -63,28 +63,29 @@ class _RandomWordsState extends State<RandomWords> {
     }
   }
 
-  late Future<ItemDetails> futureItems;
+  late Future<ItemDetails> futureItem;
 
   @override
   void initState() {
     super.initState();
-    futureItems = fetchItem();
+    futureItem = fetchItem();
   }
 
   Widget _buildSuggestions(ItemDetails futureItems) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(8.0),
+      itemCount: futureItems.count,
       itemBuilder: (context, index) {
-        if (index.isOdd) return const Divider();
-        final i = index ~/ 2;
+        //if (index.isOdd) return const Divider();
+        //final i = index ~/ 2;
         //Add new data when list reach to end
-        var size = futureItems.data == null ? 0 : futureItems.data?.length;
+        /*var size = futureItems.data == null ? 0 : futureItems.data?.length;
         if (i >= size!) {
           _suggestions.addAll(futureItems.data!);
-        }
+        }*/
         //end
         //return _buildRow(_suggestions[i], i);
-        return _buildCard(_suggestions[i]);
+        return _buildCard(futureItems.data![index]);
       },
     );
   }
@@ -92,8 +93,9 @@ class _RandomWordsState extends State<RandomWords> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white70,
       appBar: AppBar(
-        title: const Text("List page"),
+        title: const Text("Network List page"),
         actions: [
           IconButton(
             onPressed: _pushSaved,
@@ -103,16 +105,17 @@ class _RandomWordsState extends State<RandomWords> {
         ],
       ),
       body: FutureBuilder<ItemDetails>(
-        future: futureItems,
+        future: futureItem,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return _buildSuggestions(snapshot.requireData);
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
           }
-
           // By default, show a loading spinner.
-          return const CircularProgressIndicator();
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         },
       ),
     );
@@ -145,9 +148,9 @@ class _RandomWordsState extends State<RandomWords> {
         final tiles = _saved.map((item) {
           return ListTile(
               title: Text(
-                item.photographer,
-                style: _biggerFont,
-              ));
+            item.photographer,
+            style: _biggerFont,
+          ));
         });
         final divided = tiles.isNotEmpty
             ? ListTile.divideTiles(context: context, tiles: tiles).toList()
@@ -165,43 +168,92 @@ class _RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildCard(Data data) {
-    return SizedBox(
-      height: 210,
-      child: Card(
-        child: Column(
-          children: [
+    final alreadySaved = _saved.contains(data);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(15.0),
+                    topRight: Radius.circular(15.0)),
+                child: Image.network(
+                  data.image,
+                  filterQuality: FilterQuality.high,
+                  width: double.infinity,
+                  fit: BoxFit.fill,
+                  alignment: AlignmentDirectional.topStart,
+                ),
+              ),
+              Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.only(left: 8),
+                    title: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  data.photographer,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                flex: 8,
+                              ),
+                              Expanded(
+                                  child: IconButton(
+                                      onPressed: () {
+                                        // Setting the state
+                                        setState(() {
+                                          // Changing icon of specific index
+                                          alreadySaved ? _saved.remove(data) : _saved.add(data);
+                                        });
+                                      },
+                                      icon: Icon(
+                                        alreadySaved? Icons.favorite : Icons.favorite_border,
+                                        color: alreadySaved ? Colors.red : null,
+                                        semanticLabel: alreadySaved ? "Removed from saved" : "Save",
+                                      )) /**/
+                                  )
+                            ])),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(data.link),
+                    ),
+                    /*trailing: Image.network(data
+              .image)*/ /*Icon(
+            Icons.restaurant_menu,
+            color: Colors.blue[500],
+          )*/
+                  )),
+              /*const Divider(),
             ListTile(
-              title: Text(
-                data.photographer,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: Text(data.link),
-              leading: Icon(
-                Icons.restaurant_menu,
-                color: Colors.blue[500],
-              ),
+          title: const Text(
+            '(408) 555-1212',
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          leading: Icon(
+            Icons.contact_phone,
+            color: Colors.blue[500],
+          ),
             ),
-        /*    const Divider(),
             ListTile(
-              title: const Text(
-                '(408) 555-1212',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              leading: Icon(
-                Icons.contact_phone,
-                color: Colors.blue[500],
-              ),
-            ),
-            ListTile(
-              title: const Text('costa@example.com'),
-              leading: Icon(
-                Icons.contact_mail,
-                color: Colors.blue[500],
-              ),
+          title: const Text('costa@example.com'),
+          leading: Icon(
+            Icons.contact_mail,
+            color: Colors.blue[500],
+          ),
             ),*/
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
