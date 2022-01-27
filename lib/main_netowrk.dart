@@ -1,18 +1,18 @@
-import 'package:english_words/english_words.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+import 'item_details.dart';
 
 // for API
 //https://reqres.in/
 //https://www.airport-data.com/api/doc.php
 //https://www.airport-data.com/api/ac_thumb.json?m=400A0B&n=2
 //https://api.github.com/users/mralexgray/repos
-void main() {
-  //runApp(const MyImageApp());
-  runApp(const MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyNetWorkApp extends StatelessWidget {
+  const MyNetWorkApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -35,19 +35,52 @@ class RandomWords extends StatefulWidget {
 }
 
 class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
+  final _suggestions = <Data>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
-  final _saved = <WordPair>{};
+  final _saved = <Data>{};
 
-  Widget _buildSuggestions() {
+  /*List<ItemDetails> parseItem(String responseBody) {
+    final parsed = jsonDecode(responseBody).cast<Map<String, dynamic>>();
+
+    return parsed
+        .map<ItemDetails>((json) => ItemDetails.fromJson(json))
+        .toList();
+  }*/
+
+  Future<ItemDetails> fetchItem() async {
+    final response = await http.get(Uri.parse(
+        'https://www.airport-data.com/api/ac_thumb.json?m=400A0B&n=2'));
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      //return parseItem(response.body);
+      return ItemDetails.fromJson(jsonDecode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load items');
+    }
+  }
+
+  late Future<ItemDetails> futureItems;
+
+  @override
+  void initState() {
+    super.initState();
+    futureItems = fetchItem();
+  }
+
+  Widget _buildSuggestions(ItemDetails futureItems) {
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
       itemBuilder: (context, index) {
         if (index.isOdd) return const Divider();
         final i = index ~/ 2;
         //Add new data when list reach to end
-        if (i >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
+        var size = futureItems.data == null ? 0 : futureItems.data?.length;
+        if (i >= size!) {
+          _suggestions.addAll(futureItems.data!);
         }
         //end
         //return _buildRow(_suggestions[i], i);
@@ -69,11 +102,23 @@ class _RandomWordsState extends State<RandomWords> {
           )
         ],
       ),
-      body: _buildSuggestions(),
+      body: FutureBuilder<ItemDetails>(
+        future: futureItems,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return _buildSuggestions(snapshot.requireData);
+          } else if (snapshot.hasError) {
+            return Text('${snapshot.error}');
+          }
+
+          // By default, show a loading spinner.
+          return const CircularProgressIndicator();
+        },
+      ),
     );
   }
 
-  Widget _buildRow(WordPair pair, int i) {
+  /*Widget _buildRow(WordPair pair, int i) {
     final alreadySaved = _saved.contains(pair);
 
     return ListTile(
@@ -92,17 +137,17 @@ class _RandomWordsState extends State<RandomWords> {
         });
       },
     );
-  }
+  }*/
 
   void _pushSaved() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (context) {
-        final tiles = _saved.map((pair) {
+        final tiles = _saved.map((item) {
           return ListTile(
               title: Text(
-            pair.asPascalCase,
-            style: _biggerFont,
-          ));
+                item.photographer,
+                style: _biggerFont,
+              ));
         });
         final divided = tiles.isNotEmpty
             ? ListTile.divideTiles(context: context, tiles: tiles).toList()
@@ -119,24 +164,24 @@ class _RandomWordsState extends State<RandomWords> {
     ));
   }
 
-  Widget _buildCard(WordPair pair) {
+  Widget _buildCard(Data data) {
     return SizedBox(
       height: 210,
       child: Card(
         child: Column(
           children: [
             ListTile(
-              title: const Text(
-                '1625 Main Street',
-                style: TextStyle(fontWeight: FontWeight.w500),
+              title: Text(
+                data.photographer,
+                style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: const Text('My City, CA 99984'),
+              subtitle: Text(data.link),
               leading: Icon(
                 Icons.restaurant_menu,
                 color: Colors.blue[500],
               ),
             ),
-            const Divider(),
+        /*    const Divider(),
             ListTile(
               title: const Text(
                 '(408) 555-1212',
@@ -153,7 +198,7 @@ class _RandomWordsState extends State<RandomWords> {
                 Icons.contact_mail,
                 color: Colors.blue[500],
               ),
-            ),
+            ),*/
           ],
         ),
       ),
