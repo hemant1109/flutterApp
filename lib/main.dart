@@ -2,11 +2,6 @@ import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:myapp/Login.dart';
 
-// for API
-//https://reqres.in/
-//https://www.airport-data.com/api/doc.php
-//https://www.airport-data.com/api/ac_thumb.json?m=400A0B&n=2
-//https://api.github.com/users/mralexgray/repos
 void main() {
   //runApp(const MyImageApp());
   // runApp(const MyApp());
