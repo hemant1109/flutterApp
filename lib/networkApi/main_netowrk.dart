@@ -12,29 +12,33 @@ import 'item_details.dart';
 //https://api.github.com/users/mralexgray/repos
 
 class MyNetWorkApp extends StatelessWidget {
-  const MyNetWorkApp({Key? key}) : super(key: key);
+  final String title;
+
+  const MyNetWorkApp({Key? key, required this.title}) : super(key: key);
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Network List page",
+      title: title,
       theme: ThemeData(
           appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white70, foregroundColor: Colors.black)),
-      home: const RandomWords(),
+      home: NetworkApiList(title: title),
     );
   }
 }
 
-class RandomWords extends StatefulWidget {
-  const RandomWords({Key? key}) : super(key: key);
+class NetworkApiList extends StatefulWidget {
+  final String title;
+
+  const NetworkApiList({Key? key, required this.title}) : super(key: key);
 
   @override
-  State<RandomWords> createState() => _RandomWordsState();
+  State<NetworkApiList> createState() => _NetworkApiListState();
 }
 
-class _RandomWordsState extends State<RandomWords> {
+class _NetworkApiListState extends State<NetworkApiList> {
   final _suggestions = <Data>[];
   final _biggerFont = const TextStyle(fontSize: 18.0);
   final _saved = <Data>{};
@@ -95,7 +99,7 @@ class _RandomWordsState extends State<RandomWords> {
     return Scaffold(
       backgroundColor: Colors.white70,
       appBar: AppBar(
-        title: const Text("Network List page"),
+        title: Text(widget.title),
         actions: [
           IconButton(
             onPressed: _pushSaved,

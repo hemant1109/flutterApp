@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:myapp/home/Home.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,19 +13,6 @@ class LoginScreen extends StatelessWidget {
       home: LoginScreenStateFull(),
     );
   }
-}
-
-SnackBar _snackBar(
-    {required String text, String? actionLabel, VoidCallback? callback}) {
-  return SnackBar(
-    content: Text(text),
-    action: (actionLabel != null && callback != null)
-        ? SnackBarAction(
-            label: actionLabel,
-            onPressed: callback,
-          )
-        : null,
-  );
 }
 
 class LoginScreenStateFull extends StatefulWidget {
@@ -51,6 +39,7 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
       body: SingleChildScrollView(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             children: <Widget>[
               Padding(
@@ -79,7 +68,7 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
                     hintText: 'Enter valid email id as abc@gmail.com',
                   ),
                   validator: (value) {
-                    _validateEmail(value);
+                    return _validateEmail(value);
                   },
                 ),
               ),
@@ -96,7 +85,7 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
                     hintText: 'Enter secure password',
                   ),
                   validator: (value) {
-                    _validatePassword(value);
+                    return _validatePassword(value);
                   },
                 ),
               ),
@@ -106,8 +95,8 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
                   if (kDebugMode) {
                     print("FORGOT PASSWORD SCREEN");
                   }
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(_snackBar(text: "FORGOT PASSWORD SCREEN"));
+                  _showSnackBar(
+                      context: context, text: "FORGOT PASSWORD SCREEN");
                 },
                 child: const Text(
                   'Forgot Password',
@@ -122,17 +111,20 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
                     borderRadius: BorderRadius.circular(20)),
                 child: MaterialButton(
                   onPressed: () {
-                    if (!_formKey.currentState!.validate()) {
-                      return;
-                    }
-
-                    // _snackBar(
-                    //     text:
-                    //         "email:${emailController.text}\n password: ${passwordController.text}");
-                    // Future.delayed(const Duration(milliseconds: 1000), () {
-                    //   Navigator.push(context,
-                    //       MaterialPageRoute(builder: (_) => const HomePage()));
-                    // });
+                    // if (!_formKey.currentState!.validate()) {
+                    //   return;
+                    // }
+                    _showSnackBar(
+                        context: context,
+                        text: "Login in...");
+                    Future.delayed(
+                        const Duration(milliseconds: 4500), () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const HomePage()));
+                    });
                   },
                   child: const Text(
                     'Login',
@@ -145,8 +137,8 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
               ),
               GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      _snackBar(text: "New User? Create Account"));
+                  _showSnackBar(
+                      context: context, text: "New User? Create Account");
                 },
                 child: const Text(
                   'New User? Create Account',
@@ -167,11 +159,35 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
     }
   }
 
+  bool emailValidation(String email) {
+    return RegExp(r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$')
+        .hasMatch(email);
+  }
+
   String? _validateEmail(String? email) {
     if (email == null || email.isEmpty) {
       return "Enter email";
+    } else if (!emailValidation(email)) {
+      return "Enter valid email";
     } else {
       return null;
     }
+  }
+
+  void _showSnackBar(
+      {required BuildContext context,
+      required String text,
+      String? actionLabel,
+      VoidCallback? callback}) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(
+          content: Text(text),
+          action: (actionLabel != null && callback != null)
+              ? SnackBarAction(
+                  label: actionLabel,
+                  onPressed: callback,
+                )
+              : null,
+        ));
   }
 }
