@@ -19,6 +19,7 @@ class MyNetWorkApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    imageCache?.clear();
     return MaterialApp(
       title: title,
       theme: ThemeData(
@@ -164,11 +165,33 @@ class _NetworkApiListState extends State<NetworkApiList> {
                     topLeft: Radius.circular(15.0),
                     topRight: Radius.circular(15.0)),
                 child: Image.network(
-                  data.image,
+                  "https://upload.wikimedia.org/wikipedia/commons/f/ff/Pizigani_1367_Chart_10MB.jpg",
                   filterQuality: FilterQuality.high,
                   width: double.infinity,
                   fit: BoxFit.fill,
-                  alignment: AlignmentDirectional.topStart,
+                  alignment: AlignmentDirectional.topStart,semanticLabel: "Loading images",
+                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                    return Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: child,
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null){
+                      return child;
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               Padding(
