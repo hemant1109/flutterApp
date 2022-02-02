@@ -40,8 +40,6 @@ class NetworkApiList extends StatefulWidget {
 }
 
 class _NetworkApiListState extends State<NetworkApiList> {
-  final _suggestions = <Data>[];
-  final _biggerFont = const TextStyle(fontSize: 18.0);
   final _saved = <Data>{};
 
   /*List<ItemDetails> parseItem(String responseBody) {
@@ -90,7 +88,7 @@ class _NetworkApiListState extends State<NetworkApiList> {
         }*/
         //end
         //return _buildRow(_suggestions[i], i);
-        return _buildCard(futureItems.data![index]);
+        return _buildCard(futureItems.data![index], _saved);
       },
     );
   }
@@ -128,30 +126,12 @@ class _NetworkApiListState extends State<NetworkApiList> {
 
   void _pushSaved() {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) {
-        final tiles = _saved.map((item) {
-          return _buildCard(item);
-        });
-        final divided = tiles.isNotEmpty
-            ? ListTile.divideTiles(context: context, tiles: tiles).toList()
-            : <Widget>[];
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Saved Items"),
-          ),
-          body: ListView.builder(
-            itemCount: divided.length,
-            itemBuilder: (BuildContext context, int index) {
-              return divided[index];
-            },
-          ),
-        );
-      },
+      builder: (context) => FavoriteListStateFull(saved: _saved),
     ));
   }
 
-  Widget _buildCard(Data data) {
-    final alreadySaved = _saved.contains(data);
+  Widget _buildCard(Data data, Set<Data> saved) {
+    final alreadySaved = saved.contains(data);
     return LayoutBuilder(
       builder: (context, constraints) {
         return Card(
@@ -164,34 +144,36 @@ class _NetworkApiListState extends State<NetworkApiList> {
                 borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(15.0),
                     topRight: Radius.circular(15.0)),
-                child: Image.network(
-                  "https://upload.wikimedia.org/wikipedia/commons/f/ff/Pizigani_1367_Chart_10MB.jpg",
-                  filterQuality: FilterQuality.high,
-                  width: double.infinity,
-                  fit: BoxFit.fill,
-                  alignment: AlignmentDirectional.topStart,semanticLabel: "Loading images",
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    return Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: child,
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null){
-                      return child;
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
+                child: Stack(
+                  alignment: AlignmentDirectional.center,
+                  children: [
+                    const SizedBox(
+                      height: 200,
+                    ),
+                    Image.network(
+                      data.image,
+                      filterQuality: FilterQuality.high,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      semanticLabel: "Loading images",
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  ],
                 ),
               ),
               Padding(
@@ -218,8 +200,147 @@ class _NetworkApiListState extends State<NetworkApiList> {
                                         setState(() {
                                           // Changing icon of specific index
                                           alreadySaved == true
-                                              ? _saved.remove(data)
-                                              : _saved.add(data);
+                                              ? saved.remove(data)
+                                              : saved.add(data);
+                                        });
+                                      },
+                                      icon: Icon(
+                                        alreadySaved == true
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: alreadySaved == true
+                                            ? Colors.red
+                                            : null,
+                                        semanticLabel: alreadySaved == true
+                                            ? "Removed from saved"
+                                            : "Save",
+                                      )) /**/
+                                  )
+                            ])),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(data.link),
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class FavoriteListStateFull extends StatefulWidget {
+  final Set<Data> saved;
+
+  const FavoriteListStateFull({Key? key, required this.saved})
+      : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    return _FavoriteListState();
+  }
+}
+
+class _FavoriteListState extends State<FavoriteListStateFull> {
+  @override
+  Widget build(BuildContext context) {
+    final tiles = widget.saved.map((item) {
+      return _buildCard(item, widget.saved);
+    });
+    final divided = tiles.isNotEmpty
+        ? ListTile.divideTiles(context: context, tiles: tiles).toList()
+        : <Widget>[];
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Saved Items"),
+      ),
+      body: divided.isNotEmpty
+          ? ListView.builder(
+              itemCount: divided.length,
+              itemBuilder: (BuildContext context, int index) {
+                return divided[index];
+              },
+            )
+          : const Center(
+              child: Text("No favorites"),
+            ),
+    );
+  }
+
+  Widget _buildCard(Data data, Set<Data> saved) {
+    final alreadySaved = saved.contains(data);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(15.0),
+                    topRight: Radius.circular(15.0)),
+                child: Stack(
+                  alignment: AlignmentDirectional.center,
+                  children: [
+                    const SizedBox(
+                      height: 200,
+                    ),
+                    Image.network(
+                      data.image,
+                      filterQuality: FilterQuality.high,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      semanticLabel: "Loading images",
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  ],
+                ),
+              ),
+              Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.only(left: 8),
+                    title: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  data.photographer,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                flex: 8,
+                              ),
+                              Expanded(
+                                  child: IconButton(
+                                      onPressed: () {
+                                        // Setting the state
+                                        setState(() {
+                                          // Changing icon of specific index
+                                          alreadySaved == true
+                                              ? saved.remove(data)
+                                              : saved.add(data);
                                         });
                                       },
                                       icon: Icon(

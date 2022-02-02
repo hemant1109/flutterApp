@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
   List<ScreenItem> list = <ScreenItem>[
     ScreenItem(screenName: "Favourite List", id: 0),
     ScreenItem(screenName: "Network API List", id: 1),
-    ScreenItem(screenName: "Favourite List", id: 2)
   ];
 
   @override

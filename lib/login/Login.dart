@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreenStateFull> {
                         context: context,
                         text: "Login in...");
                     Future.delayed(
-                        const Duration(milliseconds: 4500), () {
+                        const Duration(milliseconds: 1500), () {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       Navigator.pushReplacement(
                           context,
